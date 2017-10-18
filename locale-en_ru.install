@@ -1,0 +1,36 @@
+# Based on install-file for locale-en_xx package maintained
+# by Xyne <ac xunilhcra enyx, backwards>
+# https://xyne.archlinux.ca/projects/locale-en_xx/pkgbuild/
+
+_locale_name='en_RU'
+_locale_gen_entry="$_locale_name"' UTF-8'
+_regex='\s*'"${_locale_gen_entry/./\\.}"'\s*$'
+_regex_general='^\s*#\?'"$_regex"
+_regex_commented='^\s*#'"$_regex"
+
+post_install ()
+{
+    # Add the locale to locale.gen if absent
+    grep -q "$_regex_general" etc/locale.gen || \
+        echo "$_locale_gen_entry" >> etc/locale.gen
+
+    # Update locales if the locale is not commented out
+    grep -q "$_regex_commented" etc/locale.gen || \
+        usr/bin/locale-gen
+}
+
+post_upgrade ()
+{
+    # Update locales if the locale is not commented out
+    grep -q "$_regex_commented" etc/locale.gen || \
+        usr/bin/locale-gen
+}
+
+pre_remove ()
+{
+    # Remove the locale from the archive
+    usr/bin/localedef --delete-from-archive "$_locale_name"
+
+    # Remove the locale from locale.gen
+    sed -i '/'"$_regex_general"'/d' etc/locale.gen
+}
